@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Recipe } from '@/types/recipe'
 import { formatTime } from '@/lib/utils/formatters'
 
@@ -13,82 +13,104 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Calcular ingredientes que faltan
+  useEffect(() => {
+    const stored = localStorage.getItem('recetapp-favorites')
+    if (stored) {
+      const favorites = JSON.parse(stored)
+      setIsFavorite(favorites.some((r: Recipe) => r.name === recipe.name))
+    }
+  }, [recipe.name])
+
+  const toggleFavorite = () => {
+    const stored = localStorage.getItem('recetapp-favorites')
+    let favorites = stored ? JSON.parse(stored) : []
+    
+    if (isFavorite) {
+      favorites = favorites.filter((r: Recipe) => r.name !== recipe.name)
+    } else {
+      favorites.push({ ...recipe, id: Date.now().toString() })
+    }
+    
+    localStorage.setItem('recetapp-favorites', JSON.stringify(favorites))
+    setIsFavorite(!isFavorite)
+  }
+
   const missingIngredients = recipe.ingredients
     .filter(ing => !ing.is_available)
-    .slice(0, 3) // Máximo 3 sugerencias
+    .slice(0, 3)
 
   const totalTime = recipe.prep_time + recipe.cook_time
 
-  // Color del badge según match score
   const getMatchColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-700 border-green-300'
-    if (score >= 60) return 'bg-yellow-100 text-yellow-700 border-yellow-300'
-    return 'bg-orange-100 text-orange-700 border-orange-300'
+    if (score >= 80) return 'bg-secondary-500 text-white border-secondary-600 shadow-lg'
+    if (score >= 60) return 'bg-yellow-400 text-yellow-900 border-yellow-500 shadow-md'
+    return 'bg-primary-500 text-white border-primary-600 shadow-md'
   }
 
   const getDifficultyColor = (difficulty: string) => {
-    if (difficulty === 'fácil') return 'text-green-600'
+    if (difficulty === 'fácil') return 'text-secondary-600'
     if (difficulty === 'media') return 'text-yellow-600'
-    return 'text-red-600'
+    return 'text-accent-600'
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col">
-      {/* Header con match score */}
-      <div className="relative p-6 pb-4">
+    <div className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-4 border-primary-200 hover:border-primary-400 flex flex-col transform hover:-translate-y-1">
+      <div className="relative p-6 pb-4 bg-gradient-to-br from-primary-50 to-yellow-50">
         <div className="flex items-start justify-between mb-3">
-          <div className={`px-3 py-1 rounded-full text-sm font-bold border-2 ${getMatchColor(recipe.match_score)}`}>
-            {recipe.match_score}% Match
+          <div className={`px-4 py-2 rounded-full text-sm font-black border-3 ${getMatchColor(recipe.match_score)}`}>
+            ✨ {recipe.match_score}% Match
           </div>
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className="text-2xl transition-transform hover:scale-110"
+            onClick={toggleFavorite}
+            className="text-3xl transition-transform hover:scale-125 active:scale-95"
           >
             {isFavorite ? '❤️' : '🤍'}
           </button>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-800 mb-2">
+        <h3 className="text-2xl font-black text-gray-800 mb-2 leading-tight">
           {recipe.name}
         </h3>
-        <p className="text-sm text-gray-600 line-clamp-2">
+        <p className="text-sm text-gray-600 line-clamp-2 font-medium">
           {recipe.description}
         </p>
       </div>
 
-      {/* Info rápida */}
-      <div className="px-6 pb-4 flex items-center gap-4 text-sm text-gray-600">
-        <span className="flex items-center gap-1">
+      <div className="px-6 pb-4 flex flex-wrap items-center gap-3 text-sm font-bold">
+        <span className="flex items-center gap-1.5 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full">
           ⏱️ {formatTime(totalTime)}
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5 bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full">
           👥 {recipe.servings}
         </span>
-        <span className={`flex items-center gap-1 font-medium ${getDifficultyColor(recipe.difficulty)}`}>
+        <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+          recipe.difficulty === 'fácil' ? 'bg-secondary-100 text-secondary-700' :
+          recipe.difficulty === 'media' ? 'bg-yellow-100 text-yellow-700' :
+          'bg-accent-100 text-accent-700'
+        }`}>
           📊 {recipe.difficulty}
         </span>
         {recipe.calories_per_serving && (
-          <span className="flex items-center gap-1 text-orange-600 font-semibold">
+          <span className="flex items-center gap-1.5 bg-gradient-to-r from-primary-500 to-accent-500 text-white px-3 py-1.5 rounded-full shadow-md">
             🔥 {recipe.calories_per_serving} cal
           </span>
         )}
       </div>
 
-      {/* Sugerencia de ingredientes faltantes */}
       {missingIngredients.length > 0 && (
         <div className="px-6 pb-4">
-          <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 border border-orange-200">
-            <p className="text-sm font-semibold text-orange-800 mb-2">
-              💡 Agregá para mejorar:
+          <div className="bg-gradient-to-br from-yellow-100 via-yellow-50 to-orange-100 rounded-2xl p-5 border-3 border-yellow-400 shadow-md">
+            <p className="text-sm font-black text-yellow-900 mb-3 flex items-center gap-2">
+              <span className="text-2xl">💡</span>
+              Agregá para mejorar esta receta:
             </p>
             <div className="flex flex-wrap gap-2">
               {missingIngredients.map((ing, idx) => (
                 <span
                   key={idx}
-                  className="text-xs bg-white px-3 py-1 rounded-full border border-orange-200 text-orange-700"
+                  className="text-sm bg-white px-4 py-2 rounded-full border-2 border-yellow-500 text-yellow-800 font-bold shadow-sm hover:shadow-md transition-shadow"
                 >
-                  {ing.name}
+                  + {ing.name}
                 </span>
               ))}
             </div>
@@ -96,18 +118,24 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
         </div>
       )}
 
-      {/* Expandible - Ingredientes e instrucciones */}
       <div className="px-6 pb-6 mt-auto">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-food-gradient hover:shadow-food text-white font-black rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
         >
-          {isExpanded ? '👆 Ver menos' : '👀 Ver receta completa'}
+          {isExpanded ? (
+            <>
+              <span>👆</span> Ocultar receta
+            </>
+          ) : (
+            <>
+              <span>👀</span> Ver receta completa
+            </>
+          )}
         </button>
 
         {isExpanded && (
           <div className="mt-6 space-y-6 animate-in fade-in duration-300">
-            {/* Info nutricional */}
             {recipe.calories_per_serving && (
               <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-200">
                 <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
@@ -132,7 +160,6 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
               </div>
             )}
 
-            {/* Ingredientes */}
             <div>
               <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                 🛒 Ingredientes
@@ -161,7 +188,6 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
               </ul>
             </div>
 
-            {/* Instrucciones */}
             <div>
               <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                 👨‍🍳 Preparación
@@ -178,7 +204,6 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
               </ol>
             </div>
 
-            {/* Tips */}
             {recipe.tips && recipe.tips.length > 0 && (
               <div>
                 <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -195,7 +220,6 @@ export default function RecipeCard({ recipe, userIngredients }: RecipeCardProps)
               </div>
             )}
 
-            {/* Tags */}
             {recipe.tags && recipe.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                 {recipe.tags.map((tag, idx) => (

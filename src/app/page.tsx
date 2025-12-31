@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import IngredientInput from '@/components/recipes/IngredientInput'
 import RecipeList from '@/components/recipes/RecipeList'
 import { Recipe } from '@/types/recipe'
@@ -9,6 +10,14 @@ export default function Home() {
   const [ingredients, setIngredients] = useState<string[]>([])
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [favoritesCount, setFavoritesCount] = useState(0)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('recetapp-favorites')
+    if (stored) {
+      setFavoritesCount(JSON.parse(stored).length)
+    }
+  }, [])
 
   const handleGenerateRecipes = async () => {
     if (ingredients.length === 0) return
@@ -34,7 +43,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50">
-      {/* Header fijo con logo */}
       <header className="bg-white shadow-md sticky top-0 z-50 border-b-4 border-primary-500">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -48,8 +56,19 @@ export default function Home() {
               <p className="text-xs text-gray-600">Tu chef con IA</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-sm">
-            <span className="px-4 py-2 bg-secondary-100 text-secondary-700 rounded-full font-semibold">
+          <div className="flex items-center gap-3">
+            <Link 
+              href="/favoritas"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-100 text-accent-700 rounded-full font-semibold hover:bg-accent-200 transition-colors"
+            >
+              ❤️ Favoritas
+              {favoritesCount > 0 && (
+                <span className="bg-accent-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                  {favoritesCount}
+                </span>
+              )}
+            </Link>
+            <span className="hidden md:flex px-4 py-2 bg-secondary-100 text-secondary-700 rounded-full font-semibold">
               ✨ Gratis
             </span>
           </div>
@@ -57,7 +76,6 @@ export default function Home() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-        {/* Hero Section */}
         {recipes.length === 0 && (
           <div className="text-center mb-12">
             <div className="inline-block mb-4">
@@ -83,7 +101,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Input Section */}
         {recipes.length === 0 && (
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 border-4 border-primary-500 relative overflow-hidden">
@@ -144,7 +161,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Ejemplos rápidos */}
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600 mb-4 font-semibold">🚀 Probá con estos:</p>
               <div className="flex flex-wrap justify-center gap-3">
@@ -172,7 +188,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Results Section */}
         {recipes.length > 0 && (
           <div>
             <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
@@ -200,7 +215,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Footer */}
       {recipes.length === 0 && (
         <footer className="text-center py-8 text-gray-600">
           <p className="text-sm">
