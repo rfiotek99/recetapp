@@ -4,7 +4,7 @@ import { buildRecipePrompt } from '@/lib/openai/prompts'
 import { validateRecipeGenerationParams } from '@/lib/utils/validators'
 import type { Recipe } from '@/types/recipe'
 
-export const maxDuration = 60
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,41 +13,29 @@ export async function POST(request: NextRequest) {
     
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: 'Datos inválidos', details: validation.error.errors },
+        { success: false, error: 'Datos inválidos' },
         { status: 400 }
       )
     }
 
-    const { ingredients, dietaryPreferences, timeAvailable, skillLevel } = validation.data
-    const prompt = buildRecipePrompt({ ingredients, dietaryPreferences, timeAvailable, skillLevel })
+    const { ingredients } = validation.data
+    const prompt = buildRecipePrompt({ ingredients })
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
-        { role: 'system', content: 'Eres un chef experto argentino especializado en crear recetas prácticas y deliciosas.' },
+        { role: 'system', content: 'Sos un chef. Responde SOLO JSON.' },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.8,
-      max_tokens: 2000,
+      temperature: 0.5,
+      max_tokens: 1200,
     })
 
-    const responseText = completion.choices[0]?.message?.content
+    const responseText = completion.choices[0]?.message?.content?.trim()
+    if (!responseText) throw new Error('Sin respuesta')
 
-    if (!responseText) {
-      throw new Error('No se recibió respuesta de OpenAI')
-    }
-
-    let parsedResponse
-    try {
-      parsedResponse = JSON.parse(responseText)
-    } catch {
-      console.error('Error parsing:', responseText)
-      throw new Error('Error al parsear respuesta de IA')
-    }
-
-    if (!parsedResponse.recipes || !Array.isArray(parsedResponse.recipes)) {
-      throw new Error('Formato de respuesta inválido')
-    }
+    const parsedResponse = JSON.parse(responseText)
+    if (!parsedResponse.recipes) throw new Error('Formato inválido')
 
     const recipes: Recipe[] = parsedResponse.recipes.map((recipe: any) => ({
       ...recipe,
@@ -63,12 +51,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { recipes, metadata: { model: OPENAI_MODEL, timestamp: new Date().toISOString(), inputIngredients: ingredients } },
+      data: { recipes },
     })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Error desconocido', message: 'No se pudieron generar las recetas.' },
+      { success: false, error: 'Error generando recetas' },
       { status: 500 }
     )
   }
