@@ -1,39 +1,31 @@
 export interface Ingredient {
-  id?: string
-  recipe_id?: string
   name: string
   amount: string
   unit: string
-  is_available: boolean
-  calories?: number // calorías por ingrediente
+  is_available?: boolean
+  calories?: number
 }
 
 export interface Recipe {
   id?: string
-  user_id?: string
   name: string
   description: string
-  difficulty: 'fácil' | 'media' | 'difícil'
+  difficulty: 'simple' | 'media' | 'compleja'
   prep_time: number
   cook_time: number
   servings: number
+  calories_per_serving?: number
+  total_calories?: number
   ingredients: Ingredient[]
   instructions: string[]
-  tips: string[]
-  tags: string[]
-  match_score: number
-  calories_per_serving?: number // NUEVO: calorías por porción
-  total_calories?: number // NUEVO: calorías totales
-  created_at?: string
+  tips?: string[]
+  tags?: string[]
+  match_score?: number
+  why_perfect?: string
 }
 
 export interface RecipeGenerationParams {
-  ingredients: string[]
+  situation: string
   dietaryPreferences?: string[]
-  timeAvailable?: number
-  skillLevel?: 'principiante' | 'intermedio' | 'avanzado'
-}
-
-export interface RecipeGenerationResponse {
-  recipes: Recipe[]
+  servings?: number
 }

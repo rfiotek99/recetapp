@@ -24,8 +24,8 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  font-size: 14px;
-  zoom: 0.75;
+  font-size: 16px;
+  zoom: 0.47;
 }
 
 @layer utilities {

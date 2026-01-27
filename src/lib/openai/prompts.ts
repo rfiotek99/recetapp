@@ -1,11 +1,17 @@
-import type { RecipeGenerationParams } from '@/types/recipe'
+export const RECIPE_GENERATION_PROMPT = `Eres un chef argentino experto. El usuario te cuenta su situación:
 
-export const RECIPE_GENERATION_PROMPT = `Chef argentino: 3 recetas con {ingredients}.
+"{situation}"
 
-JSON SOLO (sin markdown):
-{"recipes":[{"name":"","description":"","difficulty":"fácil|media|difícil","prep_time":30,"cook_time":20,"servings":4,"calories_per_serving":400,"total_calories":1600,"ingredients":[{"name":"","amount":"","unit":"","is_available":true,"calories":100}],"instructions":["Paso 1","Paso 2","Paso 3"],"tips":["Tip"],"tags":["tag"],"match_score":90}]}`
+Genera 3 recetas VARIADAS en dificultad:
+1. Una SIMPLE (30 min o menos)
+2. Una MEDIA (45 min)
+3. Una COMPLEJA (1h+, para impresionar)
 
-export function buildRecipePrompt(params: RecipeGenerationParams): string {
-  const { ingredients } = params
-  return RECIPE_GENERATION_PROMPT.replace('{ingredients}', ingredients.join(', '))
+Las recetas deben ser apropiadas para la situación, originales pero no raras, con ingredientes comunes.
+
+Responde SOLO con JSON:
+{"recipes":[{"name":"","description":"","difficulty":"simple","prep_time":20,"cook_time":15,"servings":4,"calories_per_serving":350,"total_calories":1400,"ingredients":[{"name":"pollo","amount":"500","unit":"g","calories":275}],"instructions":["Paso 1"],"tips":["Tip"],"tags":["tag"],"why_perfect":"Por qué funciona"}]}`
+
+export function buildRecipePrompt(params: { situation: string }): string {
+  return RECIPE_GENERATION_PROMPT.replace('{situation}', params.situation)
 }
